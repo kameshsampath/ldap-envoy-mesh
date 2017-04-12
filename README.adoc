@@ -1,0 +1,14 @@
+= Envoy LDAP Mesh
+
+
+
+
+== Deployment Kubernetes
+
+
+== Deployment OpenShift
+
+
+IMPORTANT: oc adm policy add-scc-to-user anyuid system:serviceaccount:myproject:envoy-389ds
+
+== References

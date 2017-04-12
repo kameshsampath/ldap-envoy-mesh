@@ -1,0 +1,84 @@
+metadata:
+  annotations:
+    configmap.fabric8.io/update-on-change: ${project.artifactId}
+spec:
+  replicas: 1
+  template:
+    spec:
+      volumes:
+        - name: envoy-config
+          configMap:
+             name: ${project.artifactId}
+             items:
+             - key: config.json
+               path: config.json
+      containers:
+      - name: 389ds
+        image: fabric8/389ds
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: "DIRSRV_HOSTNAME"
+          valueFrom:
+            configMapKeyRef:
+              key: "dirsrv-hostname"
+              name: "${project.artifactId}"
+        - name: "DIRSRV_ADMIN_USERNAME"
+          valueFrom:
+            secretKeyRef:
+              key: "dirsrvAdminUserName"
+              name: "${project.artifactId}"
+        - name: "DIRSRV_ADMIN_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              key: "dirsrvAdminUserPassword"
+              name: "${project.artifactId}"
+        - name: "DIRSRV_MANAGER_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              key: "dirsrvManagerPassword"
+              name: "${project.artifactId}"
+        - name: "DIRSRV_SUFFIX"
+          valueFrom:
+            configMapKeyRef:
+              key: "dirsrv-suffix"
+              name: "${project.artifactId}"
+        ports:
+        - containerPort: 389
+          name: ldap
+          protocol: TCP
+        livenessProbe:
+          tcpSocket:
+            port: 389
+          initialDelaySeconds: 30
+        readinessProbe:
+          tcpSocket:
+            port: 389
+          initialDelaySeconds: 30
+      - name: envoy-389ds
+        image: kameshsampath/envoy
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: ldap2
+          protocol: TCP
+        - containerPort: 8001
+          name: admin
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /server_info
+            port: 8001
+            scheme: HTTP
+          initialDelaySeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /server_info
+            port: 8001
+            scheme: HTTP
+          initialDelaySeconds: 10
+        volumeMounts:
+          - name: envoy-config
+            mountPath: /etc/envoy
+      serviceAccountName: "envoy-389ds"
+
+

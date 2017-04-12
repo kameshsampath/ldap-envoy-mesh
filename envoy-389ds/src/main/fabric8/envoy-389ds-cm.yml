@@ -1,0 +1,40 @@
+metadata:
+  name: "${project.artifactId}"
+data:
+  dirsrv-hostname: ""
+  dirsrv-suffix: "dc=example,dc=com"
+  config.json: |+
+    {
+    	"listeners": [{
+    		"port": 8080,
+    		"filters": [{
+    			"type": "read",
+    			"name": "tcp_proxy",
+    			"config": {
+    				"stat_prefix": "ldp_389ds_proxy",
+    				"route_config": {
+    					"routes": [{
+    						"cluster": "389ds_service"
+    					}]
+    				}
+    			}
+    		}]
+    	}],
+    	"admin": {
+    		"access_log_path": "/tmp/envoy.log",
+    		"port": 8001
+    	},
+    	"cluster_manager": {
+    		"clusters": [{
+    			"name": "389ds_service",
+    			"connect_timeout_ms": 250,
+    			"type": "static",
+    			"lb_type": "round_robin",
+    			"hosts": [{
+    				"url": "tcp://127.0.0.1:389"
+    			}]
+    		}]
+    	}
+    }
+
+
